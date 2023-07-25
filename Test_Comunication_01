@@ -1,0 +1,14 @@
+import socket
+
+HOST = '192.168.0.1' # 로봇의 IP 주소
+PORT = 12345 # 로봇과 통신할 포트 번호
+
+def send_key(key):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((HOST, PORT))
+        s.sendall(key.encode())
+        data = s.recv(1024)
+
+if __name__ == '__main__':
+    key = input('키를 입력하세요: ')
+    send_key(key)
