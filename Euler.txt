@@ -1,0 +1,33 @@
+MODULE MainModule
+    CONST robtarget p10:=[[302.00,30.00,538.00],[7.86846E-08,2.10835E-08,-0.965926,-0.258819],[0,0,0,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget p20:=[[312.00,36.00,567.65],[7.86846E-08,2.10835E-08,-0.965926,-0.258819],[0,0,0,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+  
+    VAR num nX1:=0;
+    VAR num nY1:=0;
+    VAR num nZ1:=0;
+    
+    VAR num nX2:=0;
+    VAR num nY2:=0;
+    VAR num nZ2:=0;
+
+    PROC main()
+        !Add your code here
+        !MoveAbsJ [[0,0,0,30,90,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]]\NoEOffs,v1000,z50,tool0;
+        
+        !MoveL p10,v1000,z50,tool0;
+        !MoveL p20,v1000,z50,tool0;
+       
+        nX1:=EulerZYX(\X,p10.rot);
+        nY1:=EulerZYX(\Y,p10.rot);
+        nZ1:=EulerZYX(\Z,p10.rot);
+        
+        nX2:=EulerZYX(\X,p20.rot);
+        nY2:=EulerZYX(\Y,p20.rot);
+        nZ2:=EulerZYX(\Z,p20.rot);
+        
+        TPErase;
+        TPWrite "X:"\Num:=nX1-nX2;
+        TPWrite "Y:"\Num:=nY1-nY2;
+        TPWrite "Z:"\Num:=nZ1-nZ2;
+    ENDPROC
+ENDMODULE
