@@ -1,0 +1,15 @@
+import socket
+
+ip = '61.250.168.39'
+port = 1234
+
+client = socket.socket()
+client.connect((ip,port))
+print('A server is connected.')
+client.send(b'Hello, server.')
+print('Data sent to the server.')
+msg = client.recv(1024)
+print('Data received from the the server.')
+print(msg)
+client.close()
+
