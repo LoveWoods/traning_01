@@ -1,0 +1,411 @@
+//PC측 프로그램(서버) 작성예
+//server program
+
+#include <stdio.h>
+#include <winsock2.h>
+#include <iostream>
+#include <string.h>
+
+#define PORT_NUM 10030
+
+//소켓통신을 행할 때의 정수를 정의합니다.
+#define SEND_DATA_SIZE 8
+#define SEND_BUFFER_LEN (SEND_DATA_SIZE * 6)
+#define REC_DATA_SIZE 12
+#define REC_DATA_NUM 7
+#define REC_IO_DATA_SIZE 3
+#define REC_BUFFER_LEN (REC_DATA_SIZE * 6 + REC_IO_DATA_SIZE + REC_DATA_NUM)
+
+int main(void) {
+
+	//제어장치와 접속을 행합니다.
+	//--------------------------------------------------------
+	//			Socket Setup
+	//--------------------------------------------------------
+	SOCKET sock0;
+	SOCKET sock;
+
+	//Socket information 
+
+	struct sockaddr_in addr;
+	struct sockaddr_in client;
+
+	//Socket communication
+
+	WSADATA wsaData;
+
+	if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
+	{
+		std::cout << "WSAStartup failed" << std::endl;
+		return 1;
+	}
+
+		//Make Socket
+
+		sock0 = socket(AF_INET, SOCK_STREAM, 0);
+
+	if (sock0 == INVALID_SOCKET)
+	{
+		std::cout << "socket : " << WSAGetLastError() << std::endl;
+		return 1;
+	}
+
+	//Set the information
+
+	addr.sin_port = htons(PORT_NUM);
+
+	addr.sin_family = AF_INET;
+
+	addr.sin_addr.S_un.S_addr = INADDR_ANY;
+
+	if (bind(sock0, (struct sockaddr *)&addr, sizeof(addr)) != 0)
+	{
+		std::cout << "bind : " << WSAGetLastError() << std::endl;
+		return 1;
+	}
+
+	//Communicate to the Client
+	if (listen(sock0, 5) != 0)
+	{
+		std::cout << "listen : " << WSAGetLastError() << std::endl;
+
+			return 1;
+	}
+
+	int len;
+
+	len = sizeof(client);
+	std::cout << "Waiting for connection ..." << std::endl;
+	sock = accept(sock0, (struct sockaddr *)&client, &len);
+	if (sock == INVALID_SOCKET)
+	{
+		std::cout << "accept : " << WSAGetLastError() << std::endl;
+		return 1;
+	}
+
+	//데이터를 수신합니다.
+	//--------------------------------------------------------
+	//			Recieve from Client
+	//--------------------------------------------------------
+
+	char rec_buffer[REC_BUFFER_LEN] = {};
+	int check = 0;
+	char *temp = NULL;
+	char *ctx = NULL;
+	std::cout << "---------------- " << std::endl;
+	std::cout << "Current Position " << std::endl;
+	std::cout << "---------------- " << std::endl;
+
+	//Recieve
+		check = recv(sock, rec_buffer, sizeof(rec_buffer), 0);
+	if (check < 1) {
+		std::cout << "recv : " << WSAGetLastError() << std::endl;
+		return 1;
+	}
+
+	temp = strtok_s(rec_buffer, ",", &ctx);
+	std::cout << "X     : " << temp << std::endl;
+
+
+	//수신한 데이터를 표시합니다.
+	temp = strtok_s(NULL, ",", &ctx);
+	std::cout << "Y     : " << temp << std::endl;
+
+	temp = strtok_s(NULL, ",", &ctx);
+	std::cout << "Z     : " << temp << std::endl;
+
+	temp = strtok_s(NULL, ",", &ctx);
+	std::cout << "Roll  : " << temp << std::endl;
+
+	temp = strtok_s(NULL, ",", &ctx);
+	std::cout << "Pitch : " << temp << std::endl;
+
+	temp = strtok_s(NULL, ",", &ctx);
+	std::cout << "Yaw   : " << temp << std::endl;
+
+	temp = strtok_s(NULL, ",", &ctx);
+
+	std::cout << "Out3_____ " << std::endl;
+	std::cout << "Out2____ |" << std::endl;
+	std::cout << "Out1___ ||" << std::endl;
+	std::cout << "       |||" << std::endl;
+	std::cout << "IO   : " << temp << std::endl;
+
+	//--------------------------------------------------------
+	//			Send to Client
+	//--------------------------------------------------------
+
+	float input = 0.0;
+	char shift_x[] = "00000.00";
+	char shift_y[] = "00000.00";
+	char shift_z[] = "00000.00";
+	char shift_r[] = "00000.00";
+	char shift_p[] = "00000.00";
+	char shift_ya[] = "00000.00";
+
+	//송신할 데이터를 입력합니다.
+	std::cout << "Set X [mm]" << std::endl;
+	std::cin >> input;
+	sprintf_s(shift_x, "%08.2f", input);
+
+	std::cout << "Set Y [mm]" << std::endl;
+	std::cin >> input;
+	sprintf_s(shift_y, "%08.2f", input);
+
+	std::cout << "Set Z [mm]" << std::endl;
+	std::cin >> input;
+	sprintf_s(shift_z, "%08.2f", input);
+
+	std::cout << "Set Roll [deg]" << std::endl;
+	std::cin >> input;
+	sprintf_s(shift_r, "%08.2f", input);
+
+	std::cout << "Set Pitch [deg]" << std::endl;
+	std::cin >> input;
+	sprintf_s(shift_p, "%08.2f", input);
+
+	std::cout << "Set Yaw [deg]" << std::endl;
+	std::cin >> input;
+	sprintf_s(shift_ya, "%08.2f", input);
+
+	char buffer[SEND_BUFFER_LEN + 1];
+
+	sprintf_s(buffer, "%s%s%s%s%s%s", shift_x, shift_y, shift_z, shift_r, shift_p, shift_ya);
+
+	std::cout << "Send Data " << std::endl;
+	std::cout << buffer << std::endl;
+
+
+	//데이터를 송신합니다.
+
+		//Send
+		check = send(sock, buffer, sizeof(buffer), 0);
+
+	//소켓을 닫습니다.
+	//--------------------------------------------------------
+	//			End Socket
+	//--------------------------------------------------------
+
+	closesocket(sock);
+
+	WSACleanup();
+
+	return 0;
+
+}
+
+
+
+
+
+
+
+
+
+
+//PC측 프로그램(클라이언트) 작성예
+//client program
+
+#include <stdio.h>
+#include <winsock2.h>
+#include <iostream>
+#include <string.h>
+
+#define PORT_NUM 10030
+
+//소켓통신을 행할 때의 정수를 정의합니다.
+#define SEND_DATA_SIZE 8
+#define SEND_BUFFER_LEN (SEND_DATA_SIZE * 6)
+#define REC_DATA_SIZE 12
+#define REC_DATA_NUM 7
+#define REC_IO_DATA_SIZE 3
+#define REC_BUFFER_LEN (REC_DATA_SIZE * 6 + REC_IO_DATA_SIZE + REC_DATA_NUM)
+
+int main(void) {
+
+	//제어장치와 접속을 행합니다.
+	//--------------------------------------------------------
+	//			Socket Setup
+	//--------------------------------------------------------
+	SOCKET sock;
+
+	//Server information 
+
+	struct sockaddr_in dest;
+
+	memset(&dest, 0, sizeof(dest));
+
+	//Server address
+
+	//xxx.xxx.xxx.xxx
+	char destination[] = "000.000.000.000";
+
+	std::cout << "Set Server address" << std::endl;
+
+	std::cin >> destination;
+
+	//Socket communication
+
+	WSADATA wsaData;
+
+	if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
+	{
+		std::cout << "WSAStartup failed" << std::endl;
+		return 1;
+	}
+
+	//Set the information
+
+	dest.sin_port = htons(PORT_NUM);
+
+	dest.sin_family = AF_INET;
+
+	dest.sin_addr.s_addr = inet_addr(destination);
+
+
+	//데이터를 수신합니다.
+	//Make Socket
+
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (sock == INVALID_SOCKET)
+	{
+		std::cout << "socket : " << WSAGetLastError() << std::endl;
+		return 1;
+
+		//제어장치와 접속을 행합니다.
+	}
+
+	//Communicate to the Server
+
+	if (connect(sock, (struct sockaddr *) &dest, sizeof(dest)))
+	{
+		std::cout << "Err Communicate to" << destination << std::endl;
+
+		return -1;
+	}
+
+	std::cout << "Communication to " << destination << " completed" << std::endl;
+
+	//--------------------------------------------------------
+	//			Recieve from Server
+	//--------------------------------------------------------
+
+	char rec_buffer[REC_BUFFER_LEN] = {};
+	int check = 0;
+	char *temp = NULL;
+	char *ctx = NULL;
+	std::cout << "---------------- " << std::endl;
+	std::cout << "Current Position " << std::endl;
+	std::cout << "---------------- " << std::endl;
+
+	//Recieve
+	check = recv(sock, rec_buffer, sizeof(rec_buffer), 0);
+	if (check < 1) {
+		std::cout << "recv : " << WSAGetLastError() << std::endl;
+		return 1;
+	}
+
+	temp = strtok_s(rec_buffer, ",", &ctx);
+	std::cout << "X     : " << temp << std::endl;
+
+	temp = strtok_s(NULL, ",", &ctx);
+	std::cout << "Y     : " << temp << std::endl;
+
+
+	//수신한 데이터를 표시합니다.
+	temp = strtok_s(NULL, ",", &ctx);
+	std::cout << "Z     : " << temp << std::endl;
+
+	temp = strtok_s(NULL, ",", &ctx);
+	std::cout << "Roll  : " << temp << std::endl;
+
+	temp = strtok_s(NULL, ",", &ctx);
+	std::cout << "Pitch : " << temp << std::endl;
+
+	temp = strtok_s(NULL, ",", &ctx);
+	std::cout << "Yaw   : " << temp << std::endl;
+
+
+	//수신한 데이터를 표시합니다.
+
+
+	temp = strtok_s(NULL, ",", &ctx);
+
+	std::cout << "Out3_____ " << std::endl;
+	std::cout << "Out2____ |" << std::endl;
+	std::cout << "Out1___ ||" << std::endl;
+	std::cout << "       |||" << std::endl;
+	std::cout << "IO   : " << temp << std::endl;
+
+	//--------------------------------------------------------
+	//			Send to Server
+	//--------------------------------------------------------
+
+	float input = 0.0;
+	char shift_x[] = "00000.00";
+	char shift_y[] = "00000.00";
+	char shift_z[] = "00000.00";
+	char shift_r[] = "00000.00";
+	char shift_p[] = "00000.00";
+	char shift_ya[] = "00000.00";
+
+	std::cout << "Set X [mm]" << std::endl;
+	std::cin >> input;
+	sprintf_s(shift_x, "%08.2f", input);
+
+	std::cout << "Set Y [mm]" << std::endl;
+	std::cin >> input;
+	sprintf_s(shift_y, "%08.2f", input);
+
+	std::cout << "Set Z [mm]" << std::endl;
+	std::cin >> input;
+
+	//송신할 데이터를 입력합니다.
+
+
+	sprintf_s(shift_z, "%08.2f", input);
+
+	std::cout << "Set Roll [deg]" << std::endl;
+	std::cin >> input;
+	sprintf_s(shift_r, "%08.2f", input);
+
+	std::cout << "Set Pitch [deg]" << std::endl;
+	std::cin >> input;
+	sprintf_s(shift_p, "%08.2f", input);
+
+	std::cout << "Set Yaw [deg]" << std::endl;
+	std::cin >> input;
+	sprintf_s(shift_ya, "%08.2f", input);
+
+
+	char buffer[SEND_BUFFER_LEN + 1];
+
+	sprintf_s(buffer, "%s%s%s%s%s%s", shift_x, shift_y, shift_z, shift_r, shift_p, shift_ya);
+
+	std::cout << "Send Data " << std::endl;
+	std::cout << buffer << std::endl;
+
+
+	//데이터를 송신합니다.
+	//Send
+	check = send(sock, buffer, sizeof(buffer), 0);
+
+	//--------------------------------------------------------
+	//			End Socket
+	//--------------------------------------------------------
+
+
+	//소켓을 닫습니다.
+
+	closesocket(sock);
+
+	WSACleanup();
+
+	return 0;
+
+}
+
+
+
+
+
